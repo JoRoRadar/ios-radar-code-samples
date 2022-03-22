@@ -22,6 +22,9 @@ class RadarModel: NSObject, RadarDelegate {
         
     }
     
+    public func appDidEnterForeground(){
+    }
+    
     func didReceiveEvents(_ events: [RadarEvent], user: RadarUser?) {
         
     }
