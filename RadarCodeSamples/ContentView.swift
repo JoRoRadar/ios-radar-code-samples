@@ -9,8 +9,9 @@ import SwiftUI
 
 struct ContentView: View {
     
-    @State private var textFieldInput: String = ""
     @EnvironmentObject var radarModel : RadarModel
+    
+    @State private var textFieldInput: String = ""
     
     var body: some View {
         VStack(alignment: .leading){
@@ -19,9 +20,11 @@ struct ContentView: View {
                 .padding()
             TextField("Search Geofences", text: $textFieldInput)
                 .onChange(of: textFieldInput) { newValue in
+                    //Generate new suggestions on each keystroke
                     radarModel.generateAutocompleteSuggestions(textInput: newValue)
                 }
                 .onSubmit {
+                    //Search for geofences near address input.
                     radarModel.searchForGeofencesNearAddress(textInput: textFieldInput)
                 }
             List {
@@ -33,6 +36,9 @@ struct ContentView: View {
     }
 }
 
+/**
+ We create a custom button for this example as an simple way to update the TextField input based on autocomplete results.
+ */
 struct CustomButton: View {
     let title: String
     @Binding var textFieldInput: String
