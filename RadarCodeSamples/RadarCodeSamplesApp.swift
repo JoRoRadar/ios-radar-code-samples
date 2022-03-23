@@ -25,8 +25,18 @@ struct RadarCodeSamplesApp: App {
             ContentView()
         }
         .onChange(of: scenePhase) { phase in
-            if phase == .active {
-                radarModel.appDidEnterForeground()
+            // Track phase change. Need to cache previous state to ignore inactive transitions. (Ex. Opening notification center)
+            switch phase {
+            case .active:
+                AppManager.shared.appActive = true
+            case .background:
+                AppManager.shared.appActive = false
+            case .inactive:
+                if !AppManager.shared.appActive {
+                    radarModel.appDidEnterForeground()
+                }
+            default:
+                break
             }
         }
     }

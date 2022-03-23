@@ -19,11 +19,15 @@ class RadarModel: NSObject, RadarDelegate {
         Radar.setDescription("This is a Radar User created from the Radar Code Samples repo.")
         
         Radar.setMetadata(["CodeFeature" : ""])
-        
     }
     
+    // MARK: App State Changes
+    
     public func appDidEnterForeground(){
+        print("App Entered Foreground")
     }
+    
+    // MARK: Primary Radar Events
     
     func didReceiveEvents(_ events: [RadarEvent], user: RadarUser?) {
         
