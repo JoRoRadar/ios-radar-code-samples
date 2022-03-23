@@ -8,7 +8,7 @@
 import Foundation
 import RadarSDK
 
-class RadarModel: NSObject, RadarDelegate {
+class RadarModel: NSObject, RadarDelegate, ObservableObject {
     
     let permissionsModel = PermissionsModel()
     
