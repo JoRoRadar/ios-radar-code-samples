@@ -12,17 +12,17 @@ import RadarSDK
 struct RadarCodeSamplesApp: App {
     
     @Environment(\.scenePhase) var scenePhase
-    let radarModel = RadarModel()
+    @StateObject var radarModel: RadarModel = RadarModel()
     
     init(){
         Radar.initialize(publishableKey: RADAR_API_KEY)
-        
         Radar.setLogLevel(RadarLogLevel.debug)
     }
     
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(radarModel)
         }
         .onChange(of: scenePhase) { phase in
             // Track phase change. Need to cache previous state to ignore inactive transitions. (Ex. Opening notification center)

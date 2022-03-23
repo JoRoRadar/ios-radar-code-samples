@@ -7,10 +7,13 @@
 
 import Foundation
 import RadarSDK
+import SwiftUI
 
-class RadarModel: NSObject, RadarDelegate {
+class RadarModel: NSObject, RadarDelegate, ObservableObject {
     
     let permissionsModel = PermissionsModel()
+    
+    @Published var autocompleteSuggestions: [String] = []
     
     override init(){
         super.init()
@@ -19,6 +22,16 @@ class RadarModel: NSObject, RadarDelegate {
         Radar.setDescription("This is a Radar User created from the Radar Code Samples repo.")
         
         Radar.setMetadata(["CodeFeature" : ""])
+    }
+    
+    // MARK: Autocomplete Functionality
+    
+    public func generateAutocompleteSuggestions(textInput: String){
+        self.autocompleteSuggestions = []
+    }
+    
+    public func searchForGeofencesNearAddress(textInput: String){
+        
     }
     
     // MARK: App State Changes
