@@ -15,7 +15,7 @@ struct RadarCodeSamplesApp: App {
     @StateObject var radarModel: RadarModel = RadarModel()
     
     init(){
-        Radar.initialize(publishableKey: "prj_test_pk_a5515e9736bf2c38504505a92f7d0c3ac6c1c8b8")
+        Radar.initialize(publishableKey: Radar_API_KEY)
         Radar.setLogLevel(RadarLogLevel.debug)
     }
     
