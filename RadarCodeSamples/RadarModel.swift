@@ -58,15 +58,17 @@ class RadarModel: NSObject, RadarDelegate, ObservableObject {
             guard status == .success, let location = location else {
                 return
             }
-
+            
+            //Center the map around the users location.
             let region = MKCoordinateRegion(center: location.coordinate, span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1))
             self.region = region
 
-            Radar.searchGeofences(near: location, radius: 10000, tags: ["SampleLocation"], metadata: nil, limit: 10) { (status: RadarStatus, location : CLLocation?, geofences: [RadarGeofence]? ) in
+            Radar.searchGeofences(near: location, radius: 1000, tags: ["<RadarGeofenceTags>"], metadata: nil, limit: 10) { (status: RadarStatus, location : CLLocation?, geofences: [RadarGeofence]? ) in
                 guard status == .success, let geofences = geofences else {
                     return
                 }
 
+                //Place map annotations for each geofence.
                 for geofence in geofences {
                     let circleGeometry : RadarCircleGeometry = geofence.geometry as! RadarCircleGeometry
                     self.nearbyGeofences.append(
@@ -81,6 +83,8 @@ class RadarModel: NSObject, RadarDelegate, ObservableObject {
      Helper function to send a local push notification for geofence arrival.
      */
     func sendLocalNotificationOnArrival(_ message:String){
+        
+        //Standard process for sending a basic local push notification.
         self.notificationCenter.getNotificationSettings { settings in
             guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional,settings.alertSetting == .enabled else{
                 return
@@ -107,7 +111,7 @@ class RadarModel: NSObject, RadarDelegate, ObservableObject {
     // MARK: Primary Radar Events
     
     /**
-     Leverage the Radar event callaback to send a push notification on arrival
+     Leverage the Radar event callaback to send a push notification on arrival. Only interested in the first event for this sample.
      */
     func didReceiveEvents(_ events: [RadarEvent], user: RadarUser?) {
         guard !events.isEmpty, let geofence = events[0].geofence else {
