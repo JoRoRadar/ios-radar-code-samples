@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<gpx version="1.1" creator="Xcode">
+    
+    <!--
+     The xCode simulator has few options for simulating location. Using a GPX file we can simulate
+    a basic location update.
+    
+    For the 'Arrival Push Notification' feature we need to simulate traveling to a geofence. Below
+    are three 'waypoints' that xCode can simulate travel between. Here are the explanation between
+    the three waypoints:
+    1) The first waypoint can be any location outside of your destination (Radar Geofence)
+    2) This should be a point within the Radar Geofence you are setting as your destination
+    3) This should be a point within the Radar Geofence that isn't the same is waypoint #2. ***
+    
+    ** This third waypoint effectively prevents xCode from looping over waypoints and allows the simulator to idle
+    at this location. This helps with sync'ing up simulated locations with Radar's tracking cadence.**
+    
+    Note: The timestamps indicate that the travel between each point will take 10 seconds then "pause" for 1 day.
+     -->
+    <wpt lat="33.19070857979977" lon="-117.3776666322948">
+        <time>2021-01-1T10:10:10Z</time>
+    </wpt>
+    <wpt lat="33.20699535666264" lon="-117.34787880249023">
+        <time>2021-01-1T10:10:20Z</time>
+    </wpt>
+    <wpt lat="33.206995356662" lon="-117.34787880249">
+        <time>2021-01-2T10:10:20Z</time>
+    </wpt>
+    
+</gpx>

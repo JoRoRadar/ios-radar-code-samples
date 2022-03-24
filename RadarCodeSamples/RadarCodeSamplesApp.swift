@@ -7,6 +7,7 @@
 
 import SwiftUI
 import RadarSDK
+import UserNotifications
 
 @main
 struct RadarCodeSamplesApp: App {
@@ -16,7 +17,7 @@ struct RadarCodeSamplesApp: App {
     
     init(){
         Radar.initialize(publishableKey: RADAR_API_KEY)
-        Radar.setLogLevel(RadarLogLevel.debug)
+        Radar.setLogLevel(RadarLogLevel.none)
     }
     
     var body: some Scene {

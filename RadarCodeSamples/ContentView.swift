@@ -6,14 +6,17 @@
 //
 
 import SwiftUI
+import MapKit
 
 struct ContentView: View {
     
     @EnvironmentObject var radarModel : RadarModel
     
     var body: some View {
-        Text("Hello, world!")
-            .padding()
+        Map(coordinateRegion: $radarModel.region, interactionModes: [], showsUserLocation: true, annotationItems: radarModel.nearbyGeofences){ annotation in
+            MapPin(coordinate: annotation.coordinate)
+        }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
