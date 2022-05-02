@@ -11,9 +11,36 @@ struct ContentView: View {
     
     @EnvironmentObject var radarModel : RadarModel
     
+    @State var isActive:Bool = false
+    
     var body: some View {
-        Text("Hello, world!")
-            .padding()
+        if self.isActive {
+            FeatureView()
+                .environmentObject(radarModel)
+        }else{
+            ZStack{
+                Rectangle()
+                    .fill(Color(red: 0.0, green: 0.4874, blue: 1.00))
+                    .edgesIgnoringSafeArea(.top)
+                VStack{
+                    Image("Radar_Logo")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .padding([.leading, .trailing], 20)
+                    Divider()
+                        .padding([.leading, .trailing], 20)
+                    Image("Radar_Sub_Title")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .padding([.leading, .trailing], 20)
+                }
+            }
+            .onAppear(){
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    self.isActive = true
+                }
+            }
+        }
     }
 }
 
