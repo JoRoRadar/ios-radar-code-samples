@@ -15,3 +15,13 @@ class AppManager {
     
     static var shared = AppManager()
 }
+
+/**
+ Utility Extensions
+ */
+
+extension String {
+    var firstLetterCapitilized: String {
+        return prefix(1).capitalized + dropFirst()
+    }
+}

@@ -7,6 +7,8 @@
 
 import SwiftUI
 
+var RADAR_BLUE_COLOR = Color(red: 0.0, green: 0.4874, blue: 1.00)
+
 struct ContentView: View {
     
     @EnvironmentObject var radarModel : RadarModel
@@ -20,7 +22,7 @@ struct ContentView: View {
         }else{
             ZStack{
                 Rectangle()
-                    .fill(Color(red: 0.0, green: 0.4874, blue: 1.00))
+                    .fill(RADAR_BLUE_COLOR)
                     .edgesIgnoringSafeArea(.top)
                 VStack{
                     Image("Radar_Logo")
