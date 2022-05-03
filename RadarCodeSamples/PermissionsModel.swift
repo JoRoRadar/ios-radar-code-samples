@@ -46,7 +46,6 @@ class PermissionsModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         self.permissionStatus = manager.authorizationStatus
-        
         /*
          If requesting background permissions in the same session, ensure that the permissionsStatus has already been authorized for when in use. Sequentially requesting
          always authorization will immediately prompt the user.
@@ -55,9 +54,46 @@ class PermissionsModel: NSObject, ObservableObject, CLLocationManagerDelegate {
          
          Permission Prompt Behavior: https://developer.apple.com/documentation/corelocation/cllocationmanager/1620551-requestalwaysauthorization
          */
+        
 //        if self.permissionStatus == .authorizedWhenInUse {
 //            self.locationManager.requestAlwaysAuthorization()
 //        }
     }
     
+}
+
+extension CLAuthorizationStatus {
+    var description: String {
+        switch self {
+            case .notDetermined:
+                return "Not Determined"
+            case .restricted:
+                return "Restricted"
+            case .denied:
+                return "Denied"
+            case .authorizedAlways:
+                return "Always"
+            case .authorizedWhenInUse:
+                return "When In Use"
+            @unknown default:
+                return "Unknown"
+        }
+    }
+    
+    var isRestrictedPermission:Bool {
+        switch self {
+            case .notDetermined:
+                return true
+            case .restricted:
+                return true
+            case .denied:
+                return true
+            case .authorizedAlways:
+                return false
+            case .authorizedWhenInUse:
+                return false
+            @unknown default:
+                return true
+        }
+    }
 }
