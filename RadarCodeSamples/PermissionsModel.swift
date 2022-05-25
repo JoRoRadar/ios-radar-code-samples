@@ -20,6 +20,7 @@ class PermissionsModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     override init(){
         super.init()
         self.locationManager.delegate = self
+        self.permissionStatus = locationManager.authorizationStatus
         
         self.requestLocationPermissions()
     }
@@ -55,9 +56,9 @@ class PermissionsModel: NSObject, ObservableObject, CLLocationManagerDelegate {
          Permission Prompt Behavior: https://developer.apple.com/documentation/corelocation/cllocationmanager/1620551-requestalwaysauthorization
          */
         
-//        if self.permissionStatus == .authorizedWhenInUse {
-//            self.locationManager.requestAlwaysAuthorization()
-//        }
+        if self.permissionStatus == .authorizedWhenInUse {
+            self.locationManager.requestAlwaysAuthorization()
+        }
     }
     
 }

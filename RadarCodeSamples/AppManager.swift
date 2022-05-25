@@ -12,13 +12,32 @@ import Foundation
  */
 class AppManager {
     var appActive = false
+    var appType : AppType = .None
     
     static var shared = AppManager()
 }
 
 /**
- Utility Extensions
+ Utility Extensions/Functions/Enums
  */
+
+enum SetupError: Error{
+    case apiKeyError(String)
+}
+
+enum AppType : CustomStringConvertible {
+    case None
+    case QSR
+    case Settings
+    
+    var description : String {
+        switch self {
+        case .None: return "None"
+        case .QSR: return "QSR"
+        case .Settings: return "Settings"
+        }
+    }
+}
 
 extension String {
     var firstLetterCapitilized: String {

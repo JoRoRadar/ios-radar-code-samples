@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-var RADAR_BLUE_COLOR = Color(red: 0.0, green: 0.4874, blue: 1.00)
-
 struct ContentView: View {
     
     @EnvironmentObject var radarModel : RadarModel
@@ -18,29 +16,37 @@ struct ContentView: View {
     var body: some View {
         if self.isActive {
             FeatureView()
+                .statusBar(hidden: true)
                 .environmentObject(radarModel)
         }else{
-            ZStack{
-                Rectangle()
-                    .fill(RADAR_BLUE_COLOR)
-                    .edgesIgnoringSafeArea(.top)
-                VStack{
-                    Image("Radar_Logo")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .padding([.leading, .trailing], 20)
-                    Divider()
-                        .padding([.leading, .trailing], 20)
-                    Image("Radar_Sub_Title")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .padding([.leading, .trailing], 20)
+            SplashScreen()
+                .statusBar(hidden: true)
+                .onAppear(){
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        self.isActive = true
+                    }
                 }
-            }
-            .onAppear(){
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    self.isActive = true
-                }
+        }
+    }
+}
+
+struct SplashScreen : View {
+    var body: some View{
+        ZStack{
+            Rectangle()
+                .fill(Color.primaryColor)
+                .edgesIgnoringSafeArea([.top, .bottom])
+            VStack{
+                Image(Constants.Design.Primary.Image.radarLogoImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .padding([.leading, .trailing], 20)
+                Divider()
+                    .padding([.leading, .trailing], 20)
+                Image(Constants.Design.Primary.Image.radarSubtitleImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .padding([.leading, .trailing], 20)
             }
         }
     }

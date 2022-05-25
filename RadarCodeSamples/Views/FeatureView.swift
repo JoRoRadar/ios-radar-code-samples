@@ -7,98 +7,99 @@
 
 import SwiftUI
 
-/*
- Features
- Autocomplete
- StoreLocator
- Trip Tracking
- InStore Mode
- */
 struct FeatureView: View {
     
     @EnvironmentObject var radarModel : RadarModel
     
+    @State var activeAppType:AppType? = .None
+    
+    let rLogoImagePadding : CGFloat = 10
+    
     var body: some View {
-        VStack{
-            Image("Radar_Logo")
-                .resizable()
-                .renderingMode(Image.TemplateRenderingMode.template)
-                .foregroundColor(RADAR_BLUE_COLOR)
-                .aspectRatio(contentMode: .fit)
-                .frame(width: UIScreen.main.bounds.width/2)
-                .padding(.top, 10)
-            Divider()
-            Spacer()
+        NavigationView{
             VStack{
-                FeatureSet(imageA: "shopping_app", imageAText: "Shopping", imageB: "qsr_app", imageBText: "Food")
-            }
-            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height * 0.5, alignment: .center)
-            Spacer()
-            Divider()
-            ScrollView{
-                VStack( alignment: .trailing){
-                    
-                    let apiTextColor: Color = radarModel.radarAPIKeyType == "Production" ? Color.blue : Color.green
-                    RadarStatusRow(rowTitle: "Radar API Key Type", rowBody: "Production", bodyColor: apiTextColor)
-                    
-                    let authTextColor: Color = radarModel.permissionsModel.permissionStatus.isRestrictedPermission ? Color.red : Color.black
-                    RadarStatusRow(rowTitle: "Authorization Status", rowBody: radarModel.permissionsModel.permissionStatus.description, bodyColor: authTextColor)
-                    
-                    RadarStatusRow(rowTitle: "Radar Tracking Mode", rowBody: radarModel.trackingMode)
-                    RadarStatusRow(rowTitle: "Radar User Name", rowBody: radarModel.radarUserId)
-                    RadarStatusRow(rowTitle: "Radar Trip Status", rowBody: radarModel.isOnTrip.description.firstLetterCapitilized
-                    )
-                    RadarStatusRow(rowTitle: "Current Geofence", rowBody: radarModel.currentGeofence)
+                //Setup nav bar, navigation links, and header
+                NavigationViews(radarModel: radarModel, activeAppType: $activeAppType)
+                    .navigationBarHidden(true)
+                
+                Image(Constants.Design.Primary.Image.radarLogoImage)
+                    .resizable()
+                    .renderingMode(Image.TemplateRenderingMode.template)
+                    .foregroundColor(Color.primaryColor)
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: Constants.screenWidth/2)
+                    .padding(.top, rLogoImagePadding)
+                Divider()
+                Spacer()
+                
+                //Setup and link available sample apps to launch
+                VStack{
+                    Text(Constants.Design.Feature.Text.fTitle)
+                        .fontWeight(.semibold)
+                    HStack{
+                        Spacer()
+                        FeatureButton(appStateBinding: $activeAppType, buttonState: .QSR, featureText: Constants.Design.Feature.Text.fQSRButtonText, imageName: Constants.Design.Feature.Image.fQSRAppImage)
+                        Spacer()
+                    }
                 }
+                Spacer()
+                Divider()
+                
+                //Setup Radar connection status table.
+                RadarStatusTable(activeAppType: $activeAppType, radarModel: radarModel)
+                    .frame(width: Constants.screenWidth, height: Constants.screenHeight/3, alignment: .bottom)
             }
-            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height * 0.25, alignment: .bottom)
         }
-        .ignoresSafeArea()
+        .navigationViewStyle(.stack)
+    }
+    
+    struct NavigationViews : View {
+        
+        var radarModel: RadarModel
+        
+        @Binding var activeAppType: AppType?
+        
+        var body: some View{
+            NavigationLink(
+                destination: MenuView().environmentObject(radarModel),
+                tag: AppType.QSR,
+                selection: $activeAppType) { EmptyView() }
+            NavigationLink(
+                destination: TrackingSettingsView().environmentObject(radarModel),
+                tag: AppType.Settings,
+                selection: $activeAppType) { EmptyView() }
+        }
     }
 }
 
-struct FeatureSet: View{
-    
-    var imageA: String
-    var imageAText: String
-    
-    var imageB: String
-    var imageBText: String
-    
-    var body: some View{
-        HStack{
-            Spacer()
-            FeatureButton(featureText: imageAText , imageName: imageA)
-            Spacer()
-            FeatureButton(featureText: imageBText, imageName: imageB)
-            Spacer()
-        }
-    }
-}
+// MARK: Supporting Views
 
 struct FeatureButton: View{
+    
+    @Binding var appStateBinding: AppType?
+    
+    @State var buttonCurrentShadowColor : Color = Color.primaryShadowColor
+    
+    var buttonState: AppType
     
     var featureText: String
     var imageName: String
     
-    var borderSize: Double = 2
-    var imagePadding: Double = 1
-    var textPadding: Double = 5
-    
-    let defaultShadowColor: Color = Color(red: 0.151, green: 0.157, blue: 0.166, opacity: 0.100)
-    let activeShadowColor: Color = RADAR_BLUE_COLOR
-    
-    @State var buttonShadowColor: Color = Color(red: 0.151, green: 0.157, blue: 0.166, opacity: 0.100)
+    let borderSize: Double = 2
+    let imagePadding: Double = 1
+    let textPadding: Double = 5
+    let cornerRadius : Double = 15
+    let textScaleMultiplier : Double = 0.25
     
     var body: some View{
         
         ZStack{
-            RoundedRectangle(cornerRadius: 15)
-                .fill(buttonShadowColor)
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(buttonCurrentShadowColor)
                 .overlay(alignment: .center){
-                    RoundedRectangle(cornerRadius: 15)
-                        .strokeBorder(RADAR_BLUE_COLOR)
-                        .background(RoundedRectangle(cornerRadius: 15).fill(Color.white))
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .strokeBorder(Color.primaryColor)
+                        .background(RoundedRectangle(cornerRadius: cornerRadius).fill(Color.white))
                         .offset(x: -2, y: -2)
                 }
 
@@ -106,54 +107,102 @@ struct FeatureButton: View{
                 Image(imageName)
                     .resizable()
                     .renderingMode(Image.TemplateRenderingMode.template)
-                    .foregroundColor(RADAR_BLUE_COLOR)
+                    .foregroundColor(Color.primaryColor)
                     .aspectRatio(contentMode: .fit)
                     .padding([.all], borderSize + imagePadding)
-
-                Spacer()
                 Text(featureText)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.25)
+                    .minimumScaleFactor(textScaleMultiplier)
                     .padding([.leading, .trailing, .bottom], textPadding)
             }
             .padding(borderSize)
             
         }
-        .frame(width: UIScreen.main.bounds.width/3, height:UIScreen.main.bounds.width/3, alignment: .leading)
+        .frame(width: Constants.screenWidth/3, height:Constants.screenWidth/3, alignment: .leading)
         .gesture(DragGesture(minimumDistance: 0)
             .onChanged({ _ in
-                buttonShadowColor = activeShadowColor
+                buttonCurrentShadowColor = Color.primaryColor
             })
             .onEnded({ _ in
-                buttonShadowColor = defaultShadowColor
+                buttonCurrentShadowColor = Color.primaryShadowColor
+                appStateBinding = buttonState
             })
         )
     }
 }
 
 struct RadarStatusRow: View{
+    
     var rowTitle:String
     var rowBody: String
-    var bodyColor: Color = Color.black
+    
+    var textColor: Color
     
     var body: some View{
         HStack{
             Text(rowTitle)
-                .frame(width:UIScreen.main.bounds.width/2, alignment: .leading)
+                .frame(width:Constants.screenWidth/2, alignment: .leading)
                 .lineLimit(1)
             Divider()
             ScrollView(.horizontal, showsIndicators: false){
                 Text(rowBody)
                     .lineLimit(1)
-                    .foregroundColor(bodyColor)
+                    .foregroundColor(textColor)
             }
-            .frame(width:UIScreen.main.bounds.width/3)
+        }
+    }
+}
+
+// MARK: Radar Connected Views
+
+struct RadarStatusTable: View {
+    
+    @Binding var activeAppType : AppType?
+    
+    var radarModel: RadarModel
+    
+    let bCustomizePadding : CGFloat = 25
+    let bCustomizeRadius : CGFloat = 50
+    
+    var body: some View{
+        ScrollView{
+            VStack( alignment: .leading){
+                Group{
+                    //Retrieve Radar settings
+                    let isProdKey = radarModel.radarAPIKeyType == Constants.Design.Primary.Text.rKeyTypeTextProd
+                    let apiTextColor: Color = isProdKey ? Color.primaryColor : Color.secondaryColor
+                    let keyStatusText = isProdKey ? Constants.Design.Primary.Text.rKeyTypeTextProd : Constants.Design.Primary.Text.rKeyTypeTextDev
+                    RadarStatusRow(rowTitle: Constants.Design.Feature.Text.rStatusKeyTypeText, rowBody: keyStatusText, textColor: apiTextColor)
+                    
+                    let authTextColor: Color = radarModel.permissionsModel.permissionStatus.isRestrictedPermission ? Color.red : Color.black
+                    RadarStatusRow(rowTitle: Constants.Design.Feature.Text.rStatusAuthStatusText, rowBody: radarModel.permissionsModel.permissionStatus.description, textColor: authTextColor)
+                    RadarStatusRow(rowTitle: Constants.Design.Feature.Text.rStatusUserNameText, rowBody: radarModel.radarUserId, textColor: .black)
+                }
+                Divider()
+                Spacer()
+                HStack{
+                    Spacer()
+                    Button(action: {
+                        activeAppType = .Settings
+                    }) {
+                        Text(Constants.Design.Feature.Text.bCustomizeText)
+                            .padding(bCustomizePadding)
+                    }
+                    .background(Color.primaryColor)
+                    .foregroundColor(Color.white)
+                    .cornerRadius(bCustomizeRadius)
+                    Spacer()
+                }
+            }
         }
     }
 }
 
 struct FeatureView_Previews: PreviewProvider {
+    static let radarModel : RadarModel = RadarModel()
+    
     static var previews: some View {
         FeatureView()
+            .environmentObject(radarModel)
     }
 }
