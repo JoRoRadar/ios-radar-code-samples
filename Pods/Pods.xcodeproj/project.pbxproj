@@ -150,7 +150,7 @@
 		1B505DBAF00E3566C9EFE0956C5E91AC /* RadarChain+Internal.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = "RadarChain+Internal.h"; path = "RadarSDK/RadarChain+Internal.h"; sourceTree = "<group>"; };
 		1BE42A9AF882BADD952F8A9B45260B6E /* Pods-RadarCodeSamples-dummy.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "Pods-RadarCodeSamples-dummy.m"; sourceTree = "<group>"; };
 		1F2D2AFE09738BCA3107F6075CDC7DAF /* RadarBeacon.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = RadarBeacon.h; path = RadarSDK/Include/RadarBeacon.h; sourceTree = "<group>"; };
-		222AB2884F19B620B0C6B79973092132 /* RadarSDK */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = RadarSDK; path = RadarSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		222AB2884F19B620B0C6B79973092132 /* RadarSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = RadarSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		22BCAF71616462DBE805D59661B85204 /* RadarCoordinate.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = RadarCoordinate.m; path = RadarSDK/RadarCoordinate.m; sourceTree = "<group>"; };
 		2343FDDC05F7BEBF0ABC4D4DAF6B2449 /* RadarBeaconManager.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = RadarBeaconManager.h; path = RadarSDK/RadarBeaconManager.h; sourceTree = "<group>"; };
 		243F8B0E594E9A6E6B74216E82F61858 /* RadarFraud+Internal.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = "RadarFraud+Internal.h"; path = "RadarSDK/RadarFraud+Internal.h"; sourceTree = "<group>"; };
@@ -220,7 +220,7 @@
 		9B95799142327AA7909748589E740F36 /* RadarSDK.modulemap */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.module; path = RadarSDK.modulemap; sourceTree = "<group>"; };
 		9CB2424D0F68FAADE8FE90AF02628A8B /* RadarGeofence.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = RadarGeofence.h; path = RadarSDK/Include/RadarGeofence.h; sourceTree = "<group>"; };
 		9D44EBFFB77DDC3F96876E44819ED757 /* RadarAPIHelper.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = RadarAPIHelper.h; path = RadarSDK/RadarAPIHelper.h; sourceTree = "<group>"; };
-		9D940727FF8FB9C785EB98E56350EF41 /* Podfile */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; includeInIndex = 1; indentWidth = 2; lastKnownFileType = text; name = Podfile; path = ../Podfile; sourceTree = SOURCE_ROOT; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
+		9D940727FF8FB9C785EB98E56350EF41 /* Podfile */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; includeInIndex = 1; indentWidth = 2; name = Podfile; path = ../Podfile; sourceTree = SOURCE_ROOT; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		A20C7C1B225EE548FE5DA98C6999A359 /* RadarCoordinate.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = RadarCoordinate.h; path = RadarSDK/Include/RadarCoordinate.h; sourceTree = "<group>"; };
 		A3EDE6BF2304B4E9A11848C84EAF8E41 /* Pods-RadarCodeSamples.modulemap */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.module; path = "Pods-RadarCodeSamples.modulemap"; sourceTree = "<group>"; };
 		A4AA9F5FC2C0C7A10927059DC0508959 /* RadarLog.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = RadarLog.h; path = RadarSDK/RadarLog.h; sourceTree = "<group>"; };
@@ -310,7 +310,7 @@
 			isa = PBXGroup;
 			children = (
 				EA5DD07F3E3292A719B77A1951298F2D /* Pods-RadarCodeSamples */,
-				222AB2884F19B620B0C6B79973092132 /* RadarSDK */,
+				222AB2884F19B620B0C6B79973092132 /* RadarSDK.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -488,7 +488,6 @@
 				49E8F2D651685CF51A66A05EB143721C /* RadarUtils.m */,
 				7BA3854F1E8EF8F51221A30C16A2736B /* Support Files */,
 			);
-			name = RadarSDK;
 			path = RadarSDK;
 			sourceTree = "<group>";
 		};
@@ -597,7 +596,7 @@
 			);
 			name = RadarSDK;
 			productName = RadarSDK;
-			productReference = 222AB2884F19B620B0C6B79973092132 /* RadarSDK */;
+			productReference = 222AB2884F19B620B0C6B79973092132 /* RadarSDK.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 		C07B85EF1D4BD44E327AA2BFA2B6F7E2 /* Pods-RadarCodeSamples */ = {
@@ -626,7 +625,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastSwiftUpdateCheck = 1240;
-				LastUpgradeCheck = 1240;
+				LastUpgradeCheck = 1330;
 			};
 			buildConfigurationList = 4821239608C13582E20E6DA73FD5F1F9 /* Build configuration list for PBXProject "Pods" */;
 			compatibilityVersion = "Xcode 13.0";
@@ -787,7 +786,7 @@
 				GCC_PREFIX_HEADER = "Target Support Files/RadarSDK/RadarSDK-prefix.pch";
 				INFOPLIST_FILE = "Target Support Files/RadarSDK/RadarSDK-Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -885,7 +884,7 @@
 				GCC_PREFIX_HEADER = "Target Support Files/RadarSDK/RadarSDK-prefix.pch";
 				INFOPLIST_FILE = "Target Support Files/RadarSDK/RadarSDK-Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

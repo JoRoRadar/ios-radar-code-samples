@@ -15,7 +15,7 @@ struct ContentView: View {
     
     var body: some View {
         if self.isActive {
-            FeatureView()
+            MainView()
                 .statusBar(hidden: true)
                 .environmentObject(radarModel)
         }else{

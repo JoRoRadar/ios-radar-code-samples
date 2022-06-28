@@ -7,40 +7,85 @@
 
 import SwiftUI
 import MapKit
+import RadarSDK
 
 struct NearbyStoreView: View {
     
     @EnvironmentObject var radarModel : RadarModel
 
+    @State var searchModalVisible: Bool = false
+    @State var searchAddress: RadarAddress? = nil
+    
     let mapFrameHeightMultiplier : CGFloat = 0.4
     
     var body: some View {
-        Divider()
-            .navigationBarTitle(Constants.Design.NearbyLocator.Text.nNavigationTitle, displayMode: .inline)
-            .onAppear{
-                radarModel.updateRegion()
-                radarModel.findNearbyLocations(appType: AppManager.shared.appType)
-            }
         VStack{
-            //Focus map on location data sent to Radar.
-            Map(coordinateRegion: $radarModel.currentRegion,
-                showsUserLocation: true,
-                annotationItems: radarModel.nearbyGeofences
-            ){ place in
-                MapPin(coordinate: place.location, tint: Color.primaryColor)
-            }
-            .frame(width: Constants.screenWidth, height: Constants.screenHeight * mapFrameHeightMultiplier, alignment: .top)
-            Text(Constants.Design.NearbyLocator.Text.nResultsTitle)
             Divider()
-            ScrollView{
-                VStack{
-                    if radarModel.nearbyGeofences.count > 0 {
-                        ForEach(radarModel.nearbyGeofences, id: \.self){ geofence in
-                            LocationCell(geofence: geofence)
+                .navigationBarTitle(Constants.Design.NearbyLocator.Text.nNavigationTitle, displayMode: .inline)
+                .toolbar {
+                    ToolbarItem( placement: .navigationBarTrailing){
+                        ToolbarButtonView
+                    }
+                }
+                .onAppear{
+                    radarModel.updateRegion()
+                    radarModel.findNearbyLocations()
+                }
+            
+            
+            if self.searchModalVisible {
+                /// RADAR POWERED: Open the 'Autocomplete' Feature.
+                SearchModalView(searchModalVisible: $searchModalVisible, confirmedAddress: $searchAddress)
+                    .environmentObject(radarModel)
+            }else{
+                /// Display nearby locations based on either the users location or an address searched for in the 'Autocomplete' feature.
+                
+                // TODO: Special handling when location permissions are disabled.
+                MapDisplayView(mapableGeofences: $radarModel.nearbyGeofences, coordinateRegion: $radarModel.currentRegion)
+                    .frame(width: Constants.screenWidth, height: Constants.screenHeight * mapFrameHeightMultiplier, alignment: .top)
+                if (self.searchAddress != nil){
+                    Text(self.searchAddress!.addressLabel ?? Constants.Design.NearbyLocator.Text.locationAddressDataUnavailable )
+                        .onAppear{
+                            radarModel.findNearbyLocations(address: self.searchAddress)
+                        }
+                }else{
+                    Text(Constants.Design.NearbyLocator.Text.nResultsTitle)
+                }
+                Divider()
+                ScrollView{
+                    VStack{
+                        if radarModel.nearbyGeofences.count > 0 {
+                            ForEach(radarModel.nearbyGeofences, id: \.self){ geofence in
+                                // The Dummy flag indicates that a pin needs to be added to the map but it is not a valid Radar geofence to present the user as a store option. This flag is not present on the base RadarGeofence class.
+                                if !geofence.isDummy {
+                                    LocationCell(radarModel: self.radarModel, geofence: geofence)
+                                }
+                            }
                         }
                     }
                 }
             }
+        }
+    }
+    
+    ///
+    /// View Sections
+    ///
+    
+    var ToolbarButtonView: some View{
+        Button(action: {
+            if( self.searchModalVisible ){
+                self.searchModalVisible = false
+                radarModel.updateRegion()
+                radarModel.findNearbyLocations()
+            }else{
+                self.searchModalVisible = true
+                self.searchAddress = nil
+            }
+        }) {
+            Image(systemName: Constants.Design.NearbyLocator.Image.searchAddressToolbarImg)
+                .renderingMode(.original)
+                .foregroundColor(.primaryColor)
         }
     }
 }
@@ -49,6 +94,7 @@ struct NearbyStoreView: View {
 
 struct LocationCell: View{
     
+    var radarModel: RadarModel
     var geofence: IdentifiableGeofence
     
     let cellImageSize: CGFloat = 50
@@ -57,9 +103,10 @@ struct LocationCell: View{
     private var storeFeaturesString = Constants.Design.NearbyLocator.Text.locationFeatureFallback
     private var storeAddressString = Constants.Design.NearbyLocator.Text.locationAddressFallback
     
-    init(geofence:IdentifiableGeofence){
+    init(radarModel: RadarModel, geofence:IdentifiableGeofence){
         
-        //Unpack all metadata from geofence.
+        self.radarModel = radarModel
+        
         self.geofence = geofence
         
         let storeHoursOpeningKey = Constants.Radar.MetadataKeys.storeHoursOpeningKey
@@ -102,6 +149,13 @@ struct LocationCell: View{
             }
                 .frame(minWidth: Constants.screenWidth, alignment: .leading)
             Divider()
+        }
+        .onTapGesture {
+            radarModel.currentRegion = MKCoordinateRegion(
+                center: geofence.location,
+                latitudinalMeters: 100,
+                longitudinalMeters: 100
+            )
         }
     }
 }

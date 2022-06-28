@@ -3,11 +3,15 @@
 <plist version="1.0">
 <dict>
 	<key>RadarAPIKey</key>
-	<string>&lt;Put Radar API Key Here&gt;</string>
+	<string>prj_test_pk_fd04a06a7e14301ce5308d536f212442b5fb4d07</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
 		<string>location</string>
 	</array>
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleLightContent</string>
+	<key>UIUserInterfaceStyle</key>
+	<string>Light</string>
 </dict>
 </plist>

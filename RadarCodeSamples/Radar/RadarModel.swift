@@ -20,21 +20,40 @@ class RadarModel: NSObject, RadarDelegate, ObservableObject {
     @Published var tripStatus: RadarTripStatus = .unknown
     @Published var expectedJourneyRemaining: Int?
     
-    @Published var currentRegion: MKCoordinateRegion = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 30, longitude: -122), latitudinalMeters: 100, longitudinalMeters: 100)
+    @Published var currentRegion: MKCoordinateRegion = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 30, longitude: -122), latitudinalMeters: 1000, longitudinalMeters: 1000)
     @Published var nearbyGeofences: [IdentifiableGeofence] = []
     
-    var radarAPIKeyType: String = Constants.Design.Primary.Text.rKeyTypeTextProd
+    @Published var autocompleteSuggestions: [RadarAddress] = []
     
-    var customTrackingOptions: RadarTrackingOptions? = nil
+    var debounceTimer : Timer? // A timer is leveraged to ensure we are throttling API requests.
+    
+    var radarAPIKeyType: String = Constants.Design.Primary.Text.rKeyTypeTextProd
     
     var permissionsModel = PermissionsModel()
     
     private var currentLocation: CLLocationCoordinate2D?
-    private var runningFeatureFlags: ActiveFeatures = ActiveFeatures()
+//    private var runningFeatureFlags: ActiveFeatures = ActiveFeatures()
+    @Published var autocompleteStatus: AutocompleteStatus = AutocompleteStatus()
+    @Published var geofenceSearchStatus: GeofenceSearchStatus = GeofenceSearchStatus()
+    @Published var tripTrackingStatus: TripTrackingStatus = TripTrackingStatus()
     
     let defaultBackgroundTrackingOption = RadarTrackingOptions.presetContinuous
-    let radarGeofenceSearchRadius:Int32 = 10000
+    let radarGeofenceSearchRadius:Int32 = Constants.Radar.Defaults.rDefaultSearchRadius
+    let geofenceTag: String = Constants.Radar.Defaults.rGeofenceTag
     
+    /// Status of all running async requests
+    
+    struct AutocompleteStatus {
+        
+    }
+    
+    struct GeofenceSearchStatus {
+        var isRunningNearbySearch: Bool = false
+    }
+    
+    struct TripTrackingStatus {
+        
+    }
     struct ActiveFeatures {
         var isRunningNearbySearch: Bool = false
     }
@@ -71,7 +90,7 @@ class RadarModel: NSObject, RadarDelegate, ObservableObject {
         ]
         
         Radar.startTrip(options: tripOptions)
-        self.startTracking()
+        Radar.startTracking(trackingOptions: .presetContinuous)
         
         self.tripStatus = .started
         self.isOnTrip = true
@@ -100,27 +119,55 @@ class RadarModel: NSObject, RadarDelegate, ObservableObject {
     /*
      Implementation of a 'Nearby Locations' feature
      */
-    func findNearbyLocations(appType: AppType) {
-        //As the sample repo provides a launch screen and settings screen we filter out those options here.
-        if appType == .None || appType == .Settings || runningFeatureFlags.isRunningNearbySearch {
+    func findNearbyLocations(address:RadarAddress? = nil) {
+        
+        if runningFeatureFlags.isRunningNearbySearch {
             return
         }
         
-        let tag = appType.description
         runningFeatureFlags.isRunningNearbySearch = true
         
         // A standard store locator will typically need only a radius and the geofence tag. As Radar allows for layering geofences on a location, we suggest a tag that represents the store footprint.
-        Radar.searchGeofences(radius: radarGeofenceSearchRadius, tags: [tag], metadata: nil, limit: 10) { (status:RadarStatus, location: CLLocation?, geofences: [RadarGeofence]? ) in
+        if address != nil {
+            let radarAddress = address!
             
-            self.runningFeatureFlags.isRunningNearbySearch = false
+            let location = CLLocation(latitude: radarAddress.coordinate.latitude, longitude: radarAddress.coordinate.longitude)
+            self.currentRegion = MKCoordinateRegion(center: location.coordinate, latitudinalMeters: 10000, longitudinalMeters: 10000)
             
-            guard status == .success, let geofences = geofences else {
-                return
+            Radar.searchGeofences(near: location, radius: 10000, tags: [self.geofenceTag], metadata: nil, limit: 10){(status:RadarStatus, location: CLLocation?, geofences: [RadarGeofence]? ) in
+                
+                self.runningFeatureFlags.isRunningNearbySearch = false
+                
+                guard status == .success, let geofences = geofences else {
+                    return
+                }
+                
+                self.updateNearbyGeofences(geofences: geofences, additionalMarkers: [radarAddress.coordinate])
             }
-            
-            self.nearbyGeofences = []
-            for geofence in geofences {
-                self.nearbyGeofences.append(IdentifiableGeofence(geofence: geofence))
+        }else{
+            Radar.searchGeofences(radius: radarGeofenceSearchRadius, tags: [self.geofenceTag], metadata: nil, limit: 10) { (status:RadarStatus, location: CLLocation?, geofences: [RadarGeofence]? ) in
+                
+                self.runningFeatureFlags.isRunningNearbySearch = false
+                
+                guard status == .success, let geofences = geofences else {
+                    return
+                }
+                
+                self.updateNearbyGeofences(geofences: geofences)
+            }
+        }
+    }
+    
+    func updateNearbyGeofences(geofences: [RadarGeofence], additionalMarkers: [CLLocationCoordinate2D]? = nil){
+        self.nearbyGeofences = []
+        
+        for geofence in geofences {
+            self.nearbyGeofences.append(IdentifiableGeofence(geofence: geofence))
+        }
+        
+        if additionalMarkers != nil {
+            for marker in additionalMarkers! {
+                self.nearbyGeofences.append(IdentifiableGeofence(coordinate: marker))
             }
         }
     }
@@ -136,6 +183,26 @@ class RadarModel: NSObject, RadarDelegate, ObservableObject {
                 }else if event.type == .userExitedGeofence{
                     //Deactive 'In Store' mode if needed
                 }
+            }
+        }
+    }
+    
+    func generateAutocompleteSuggestions(textInput: String){
+        // Invalidate the previous timer to ensure we are querying on the most recent text input.
+        self.debounceTimer?.invalidate()
+        
+        // Perform query in 0.5 seconds
+        self.debounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false){ _ in
+            
+            // Submit text input to AutoComplete API
+            Radar.autocomplete(query: textInput, near: nil, limit: 4) { (status:RadarStatus, addresses:[RadarAddress]?) in
+
+                guard status == .success, let addresses = addresses else {
+                    return
+                }
+                
+                // Update UI to present results.
+                self.autocompleteSuggestions = addresses
             }
         }
     }
@@ -213,23 +280,6 @@ class RadarModel: NSObject, RadarDelegate, ObservableObject {
     }
 }
 
-extension RadarModel{
-    /*
-     To extend this sample repo for testing purposes the ability
-     to alter tracking options was added. This functionality would
-     not typically be available for a consumer and Radar.startTracking
-     could be called directly with a predefined RadarTrackingOption.
-     */    
-    func startTracking(){
-        guard let trackedOptions = customTrackingOptions else {
-            Radar.startTracking(trackingOptions: defaultBackgroundTrackingOption)
-            return
-        }
-
-        Radar.startTracking(trackingOptions: trackedOptions)
-    }
-}
-
 // MARK: Geofence Wrapper
 
 /*
@@ -239,7 +289,9 @@ extension RadarModel{
  This struct can be extended further to ensure all geofence data (like geometry) is truly hashable.
  */
 struct IdentifiableGeofence: Identifiable {
-        
+    
+    let isDummy: Bool
+    
     let id: String //Internal Radar ID
     
     let externalId: String
@@ -256,6 +308,7 @@ struct IdentifiableGeofence: Identifiable {
     }
     
     init(geofence: RadarGeofence) {
+        self.isDummy = false
         self.id = geofence._id
         self.externalId = geofence.externalId!
         self.tag = geofence.tag!
@@ -289,6 +342,19 @@ struct IdentifiableGeofence: Identifiable {
         self.metadata = t_metadata
         
     }
+    
+    //Dummy Geofence for simple Map Markers
+    init(coordinate: CLLocationCoordinate2D){
+        self.isDummy = true
+        self.id = "MapPlaceholder"
+        self.externalId = "MapPlaceholder"
+        self.tag = "MapPlaceholder"
+        self.description = "MapPlaceholder"
+        self.latitude = coordinate.latitude
+        self.longitude = coordinate.longitude
+        self.metadata = [:]
+    }
+    
 }
 
 // MARK: Extensions
@@ -296,21 +362,5 @@ struct IdentifiableGeofence: Identifiable {
 extension IdentifiableGeofence: Hashable {
     static func == (lhs: IdentifiableGeofence, rhs: IdentifiableGeofence) -> Bool {
         return lhs.id == rhs.id
-    }
-}
-
-extension RadarTrackingOptions{
-    
-    var stringValue : String {
-        get {
-            switch self{
-            case RadarTrackingOptions.presetContinuous:
-                return "Continuous (BG)"
-            case RadarTrackingOptions.presetEfficient:
-                return "Efficient (BG)"
-            default:
-                return "Responsive (BG)"
-            }
-        }
     }
 }

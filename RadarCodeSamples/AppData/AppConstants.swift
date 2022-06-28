@@ -27,6 +27,10 @@ struct Constants{
             static let rUserName = "SampleUser"
             static let rUserDescription = "This is a radar user created from the Radar Code Samples repo"
             static let rUserMetadata = ["IsTestUser": true]
+            
+            static let rGeofenceTag = "QSR"
+            
+            static let rDefaultSearchRadius: Int32 = 10000
         }
         struct MetadataKeys {
             static let storeHoursOpeningKey = "store_hours_opening"
@@ -47,50 +51,6 @@ struct Constants{
             struct Text {
                 static let rKeyTypeTextProd = "Production"
                 static let rKeyTypeTextDev = "Test"
-            }
-        }
-        struct Feature {
-            struct Text{
-                static let rStatusKeyTypeText = "Radar API Key Type"
-                static let rStatusAuthStatusText = "Authorization Status"
-                static let rStatusUserNameText = "Radar User Name"
-                
-                static let bCustomizeText = "Customize Background Tracking Settings"
-                
-                static let fQSRButtonText = "Food"
-                
-                static let fTitle = "Click to Launch App"
-            }
-            
-            struct Image {
-                static let fQSRAppImage = "qsr_app"
-            }
-        }
-        
-        struct TrackSettings {
-            struct Text{
-                static let sNavigationTitle = "Track Settings"
-                static let sViewDescription = "Update the background tracking options here for use in the sample app."
-                static let bSaveText = "Save Changes"
-                
-                static let pRadarPresetsTitle = "Radar Presets"
-                
-                static let updateOptionSliderStopped = "Stopped Update Interval"
-                static let updateOptionSliderMoving = "Moving Update Interval"
-                static let updateOptionSliderSync = "Sync Interval"
-                
-                static let desiredAccuracyTitle = "Desired Accuracy"
-                
-                static let syncLocationTypesTitle = "Sync Location Types"
-                
-                static let useStoppedGeofencesTitle = "Use Stopped Geofences"
-                static let stoppedGeofenceRadiusSliderTitle = "Stopped Geofence Radius"
-                
-                static let useMovingGeofencesTitle = "Use Moving Geofences"
-                static let movingGeofenceRadiusSliderTitle = "Moving Geofence Radius"
-                
-                static let syncGeofencesTitle = "Sync Geofences"
-                static let useSignificantLocationsTitle = "Use Significat Location"
             }
         }
         struct QSR {
@@ -141,10 +101,21 @@ struct Constants{
                 
                 static let locationFeatureAvailable = "Curbside is available at this location"
                 static let locationFeatureNotAvailable = "Curbside is not available at this location"
+                
+                static let locationAddressDataUnavailable = "Network Error"
+                
+                static let sAddressFieldInputPrompt = "Search for address, city, or zip"
             }
             
             struct Image {
                 static let mapPinSysImg = "mappin.circle"
+                
+                static let searchAddressToolbarImg = "magnifyingglass.circle"
+                static let searchAddressSelectorImg = "arrow.right"
+                
+                static let mapDisplayGeofencePinImg_0 = "mappin.circle.fill"
+                static let mapDisplayGeofencePinImg_1 = "arrowtriangle.down.fill"
+                static let mapDisplayDummyPinImg = "mappin"
             }
         }
         struct Tracking {
