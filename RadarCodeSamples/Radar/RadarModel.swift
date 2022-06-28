@@ -16,46 +16,27 @@ class RadarModel: NSObject, RadarDelegate, ObservableObject {
     
     @Published var isBackgroundTracking = false
     
-    @Published var isOnTrip: Bool = false
-    @Published var tripStatus: RadarTripStatus = .unknown
-    @Published var expectedJourneyRemaining: Int?
-    
     @Published var currentRegion: MKCoordinateRegion = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 30, longitude: -122), latitudinalMeters: 1000, longitudinalMeters: 1000)
-    @Published var nearbyGeofences: [IdentifiableGeofence] = []
     
-    @Published var autocompleteSuggestions: [RadarAddress] = []
-    
-    var debounceTimer : Timer? // A timer is leveraged to ensure we are throttling API requests.
+    @Published var autocompleteStatus: AutocompleteStatus = AutocompleteStatus()
+    @Published var geofenceSearchStatus: GeofenceSearchStatus = GeofenceSearchStatus()
+    @Published var tripTrackingStatus: TripTrackingStatus = TripTrackingStatus()
     
     var radarAPIKeyType: String = Constants.Design.Primary.Text.rKeyTypeTextProd
     
     var permissionsModel = PermissionsModel()
     
-    private var currentLocation: CLLocationCoordinate2D?
-//    private var runningFeatureFlags: ActiveFeatures = ActiveFeatures()
-    @Published var autocompleteStatus: AutocompleteStatus = AutocompleteStatus()
-    @Published var geofenceSearchStatus: GeofenceSearchStatus = GeofenceSearchStatus()
-    @Published var tripTrackingStatus: TripTrackingStatus = TripTrackingStatus()
-    
     let defaultBackgroundTrackingOption = RadarTrackingOptions.presetContinuous
+    
     let radarGeofenceSearchRadius:Int32 = Constants.Radar.Defaults.rDefaultSearchRadius
     let geofenceTag: String = Constants.Radar.Defaults.rGeofenceTag
     
     /// Status of all running async requests
     
     struct AutocompleteStatus {
+        var autocompleteSuggestions: [RadarAddress] = []
         
-    }
-    
-    struct GeofenceSearchStatus {
-        var isRunningNearbySearch: Bool = false
-    }
-    
-    struct TripTrackingStatus {
-        
-    }
-    struct ActiveFeatures {
-        var isRunningNearbySearch: Bool = false
+        var debounceTimer : Timer? // A timer is leveraged to ensure we are throttling API requests.
     }
     
     override init(){
@@ -70,11 +51,31 @@ class RadarModel: NSObject, RadarDelegate, ObservableObject {
         self.updateRegion()
     }
     
-    // MARK: Radar Enabled Features
+    // MARK: Generic Functions for UI
+    
+    //Update the users region for presentation in a Map View.
+    func updateRegion(){
+        Radar.trackOnce { (status: RadarStatus, location: CLLocation?, events: [RadarEvent]?, user: RadarUser?) in
+            guard status == .success, let location = location else{
+                self.currentRegion = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 40.73566, longitude: -73.99048), latitudinalMeters: 1000, longitudinalMeters: 1000)
+                return
+            }
+            
+            self.currentRegion = MKCoordinateRegion(center: location.coordinate, latitudinalMeters: 1000, longitudinalMeters: 1000)
+        }
+    }
+    
+    // MARK: Trip Tracking
+    
+    struct TripTrackingStatus {
+        var isOnTrip: Bool = false
+        var tripStatus: RadarTripStatus = .unknown
+        var expectedJourneyRemaining: Int?
+    }
     
     func startTripForSelectedLocation(selectedGeofence:IdentifiableGeofence){
         
-        if self.isOnTrip{
+        if self.tripTrackingStatus.isOnTrip{
             return
         }
         
@@ -92,51 +93,43 @@ class RadarModel: NSObject, RadarDelegate, ObservableObject {
         Radar.startTrip(options: tripOptions)
         Radar.startTracking(trackingOptions: .presetContinuous)
         
-        self.tripStatus = .started
-        self.isOnTrip = true
+        self.tripTrackingStatus.tripStatus = .started
+        self.tripTrackingStatus.isOnTrip = true
     }
     
-    //Complete a trip and stop background tracking.
     func completeCurrentTrip(){
         Radar.completeTrip()
         Radar.stopTracking()
-        self.tripStatus = .completed
-        self.isOnTrip = false
+        self.tripTrackingStatus.tripStatus = .completed
+        self.tripTrackingStatus.isOnTrip = false
     }
     
-    //Update the users region for presentation in a Map View.
-    func updateRegion(){
-        Radar.trackOnce { (status: RadarStatus, location: CLLocation?, events: [RadarEvent]?, user: RadarUser?) in
-            guard status == .success, let location = location else{
-                self.currentRegion = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 40.73566, longitude: -73.99048), latitudinalMeters: 1000, longitudinalMeters: 1000)
-                return
-            }
-            
-            self.currentRegion = MKCoordinateRegion(center: location.coordinate, latitudinalMeters: 1000, longitudinalMeters: 1000)
-        }
+    
+    // MARK: Store Locator
+    
+    struct GeofenceSearchStatus {
+        var isRunningNearbySearch: Bool = false
+        var nearbyGeofences: [IdentifiableGeofence] = []
     }
     
-    /*
-     Implementation of a 'Nearby Locations' feature
-     */
+    /// Support searching for goefences near the users current location and an address that has been manually entered.
     func findNearbyLocations(address:RadarAddress? = nil) {
         
-        if runningFeatureFlags.isRunningNearbySearch {
+        if self.geofenceSearchStatus.isRunningNearbySearch {
             return
         }
         
-        runningFeatureFlags.isRunningNearbySearch = true
+        self.geofenceSearchStatus.isRunningNearbySearch = true
         
-        // A standard store locator will typically need only a radius and the geofence tag. As Radar allows for layering geofences on a location, we suggest a tag that represents the store footprint.
         if address != nil {
             let radarAddress = address!
             
             let location = CLLocation(latitude: radarAddress.coordinate.latitude, longitude: radarAddress.coordinate.longitude)
             self.currentRegion = MKCoordinateRegion(center: location.coordinate, latitudinalMeters: 10000, longitudinalMeters: 10000)
             
-            Radar.searchGeofences(near: location, radius: 10000, tags: [self.geofenceTag], metadata: nil, limit: 10){(status:RadarStatus, location: CLLocation?, geofences: [RadarGeofence]? ) in
+            Radar.searchGeofences(near: location, radius: self.radarGeofenceSearchRadius, tags: [self.geofenceTag], metadata: nil, limit: 10){(status:RadarStatus, location: CLLocation?, geofences: [RadarGeofence]? ) in
                 
-                self.runningFeatureFlags.isRunningNearbySearch = false
+                self.geofenceSearchStatus.isRunningNearbySearch = false
                 
                 guard status == .success, let geofences = geofences else {
                     return
@@ -145,9 +138,9 @@ class RadarModel: NSObject, RadarDelegate, ObservableObject {
                 self.updateNearbyGeofences(geofences: geofences, additionalMarkers: [radarAddress.coordinate])
             }
         }else{
-            Radar.searchGeofences(radius: radarGeofenceSearchRadius, tags: [self.geofenceTag], metadata: nil, limit: 10) { (status:RadarStatus, location: CLLocation?, geofences: [RadarGeofence]? ) in
+            Radar.searchGeofences(radius: self.radarGeofenceSearchRadius, tags: [self.geofenceTag], metadata: nil, limit: 10) { (status:RadarStatus, location: CLLocation?, geofences: [RadarGeofence]? ) in
                 
-                self.runningFeatureFlags.isRunningNearbySearch = false
+                self.geofenceSearchStatus.isRunningNearbySearch = false
                 
                 guard status == .success, let geofences = geofences else {
                     return
@@ -159,18 +152,48 @@ class RadarModel: NSObject, RadarDelegate, ObservableObject {
     }
     
     func updateNearbyGeofences(geofences: [RadarGeofence], additionalMarkers: [CLLocationCoordinate2D]? = nil){
-        self.nearbyGeofences = []
+        self.geofenceSearchStatus.nearbyGeofences = []
         
         for geofence in geofences {
-            self.nearbyGeofences.append(IdentifiableGeofence(geofence: geofence))
+            self.geofenceSearchStatus.nearbyGeofences.append(IdentifiableGeofence(geofence: geofence))
         }
         
         if additionalMarkers != nil {
             for marker in additionalMarkers! {
-                self.nearbyGeofences.append(IdentifiableGeofence(coordinate: marker))
+                self.geofenceSearchStatus.nearbyGeofences.append(IdentifiableGeofence(coordinate: marker))
             }
         }
     }
+    
+    // MARK: Autocomplete Search Results
+    
+    /// Make responsive autocomplete requests as it relates to a stream of keystrokes minding rate limiting.
+    ///
+    /// It is important to throttle the requests to any API and as such keystrokes for addresses tend to be pretty demanding. A proper user experience
+    /// will only make requests in an attempt to aid the users search. Waiting for a keystroke pause is a perfect indicator of when the user is looking for
+    /// assistance.
+    func generateAutocompleteSuggestions(textInput: String){
+        // Invalidate the previous timer to ensure we are querying on the most recent text input.
+        self.autocompleteStatus.debounceTimer?.invalidate()
+        
+        // Perform query in 0.5 seconds
+        self.autocompleteStatus.debounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false){ _ in
+            
+            // Submit text input to AutoComplete API
+            Radar.autocomplete(query: textInput, near: nil, limit: 4) { (status:RadarStatus, addresses:[RadarAddress]?) in
+
+                guard status == .success, let addresses = addresses else {
+                    return
+                }
+                
+                // Update UI to present results.
+                self.autocompleteStatus.autocompleteSuggestions = addresses
+            }
+        }
+    }
+    
+    // MARK: In Store Mode
+    // TODO: Implement 'In Store Mode"
     
     func checkForInStoreMode(){
         Radar.trackOnce { (status: RadarStatus, location: CLLocation?, events: [RadarEvent]?, user: RadarUser?) in
@@ -187,31 +210,11 @@ class RadarModel: NSObject, RadarDelegate, ObservableObject {
         }
     }
     
-    func generateAutocompleteSuggestions(textInput: String){
-        // Invalidate the previous timer to ensure we are querying on the most recent text input.
-        self.debounceTimer?.invalidate()
-        
-        // Perform query in 0.5 seconds
-        self.debounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false){ _ in
-            
-            // Submit text input to AutoComplete API
-            Radar.autocomplete(query: textInput, near: nil, limit: 4) { (status:RadarStatus, addresses:[RadarAddress]?) in
-
-                guard status == .success, let addresses = addresses else {
-                    return
-                }
-                
-                // Update UI to present results.
-                self.autocompleteSuggestions = addresses
-            }
-        }
-    }
-    
     // MARK: App State Changes
     
-    /*
-     When the app enters the foreground or launches, call trackOnce to identify if a user is on store premise. The events can by filtered further by geofence.tag or geofence.metadata
-     */
+    /// Identify if the user is in the store as app state changes.
+    ///
+    /// It is recommended to always call trackOnce on these state changes regardless if background tracking is enabled.
     public func appDidLaunch(){
         self.checkForInStoreMode()
     }
@@ -221,12 +224,13 @@ class RadarModel: NSObject, RadarDelegate, ObservableObject {
     
     // MARK: Primary Radar Events
     
-    /*
-     The Radar event delegate can become bloated quickly as more functionality becomes dependant on location.
-     We recommend passing out responbalities to different modules rather than reacting to an event directly in the
-     delegate function. This suggestion has not been implemented for the Sample Repo as it would have the reverse effect
-     by creating bloat.
-     */
+    
+    /// Triage and handoff specific Radar Event types to proper client side functions.
+    ///
+    ///
+    /// The Radar event delegate can become bloated quickly as more functionality becomes dependant on location. We
+    /// recommend triaging and passing out responsabilities to different functions.
+     
     func didReceiveEvents(_ events: [RadarEvent], user: RadarUser?) {
         
         for radarEvent in events{
@@ -242,19 +246,19 @@ class RadarModel: NSObject, RadarDelegate, ObservableObject {
                     
                 // Trip Events //
                 case .userStartedTrip, .userUpdatedTrip:
-                    self.expectedJourneyRemaining = Int(ceil(radarEvent.trip!.etaDuration))
+                    self.tripTrackingStatus.expectedJourneyRemaining = Int(ceil(radarEvent.trip!.etaDuration))
                     
                 case .userApproachingTripDestination:
-                    self.tripStatus = .approaching
-                    self.expectedJourneyRemaining = Int(ceil(radarEvent.trip!.etaDuration))
+                    self.tripTrackingStatus.tripStatus = .approaching
+                    self.tripTrackingStatus.expectedJourneyRemaining = Int(ceil(radarEvent.trip!.etaDuration))
                     
                 case .userArrivedAtTripDestination:
-                    self.tripStatus = .arrived
-                    self.expectedJourneyRemaining = 0
+                    self.tripTrackingStatus.tripStatus = .arrived
+                    self.tripTrackingStatus.expectedJourneyRemaining = 0
                     
                 case .userStoppedTrip:
-                    self.tripStatus = .completed
-                    self.expectedJourneyRemaining = 0
+                    self.tripTrackingStatus.tripStatus = .completed
+                    self.tripTrackingStatus.expectedJourneyRemaining = 0
                     
                 default:
                     break
@@ -266,8 +270,6 @@ class RadarModel: NSObject, RadarDelegate, ObservableObject {
     // MARK: Additional Radar Events
     
     func didUpdateClientLocation(_ location: CLLocation, stopped: Bool, source: RadarLocationSource) {
-        //Keep track of a published location for any map view
-        currentLocation = location.coordinate
     }
     
     func didFail(status: RadarStatus) {
@@ -282,12 +284,14 @@ class RadarModel: NSObject, RadarDelegate, ObservableObject {
 
 // MARK: Geofence Wrapper
 
-/*
- Radar geofences are not identifiable/hashable by default. We can create this wrapper
- struct to permit geofences being used 'directly' it views like Maps with this setup.
+
+/// Create a Hashable Radar Geofence for use in SwiftUI Elements (Loops & Maps)
+///
+///
+/// Radar geofences are not identifiable/hashable by default. We can create this wrapper struct to permit geofences
+/// being used 'directly' it views like Maps with this setup. This struct can be extended further to ensure all geofence
+/// data (like geometry) is truly hashable.
  
- This struct can be extended further to ensure all geofence data (like geometry) is truly hashable.
- */
 struct IdentifiableGeofence: Identifiable {
     
     let isDummy: Bool
@@ -342,19 +346,6 @@ struct IdentifiableGeofence: Identifiable {
         self.metadata = t_metadata
         
     }
-    
-    //Dummy Geofence for simple Map Markers
-    init(coordinate: CLLocationCoordinate2D){
-        self.isDummy = true
-        self.id = "MapPlaceholder"
-        self.externalId = "MapPlaceholder"
-        self.tag = "MapPlaceholder"
-        self.description = "MapPlaceholder"
-        self.latitude = coordinate.latitude
-        self.longitude = coordinate.longitude
-        self.metadata = [:]
-    }
-    
 }
 
 // MARK: Extensions
@@ -362,5 +353,17 @@ struct IdentifiableGeofence: Identifiable {
 extension IdentifiableGeofence: Hashable {
     static func == (lhs: IdentifiableGeofence, rhs: IdentifiableGeofence) -> Bool {
         return lhs.id == rhs.id
+    }
+    
+    //Dummy Geofence for simple Map Markers
+    init(coordinate: CLLocationCoordinate2D){
+        self.isDummy = true
+        self.id = ""
+        self.externalId = ""
+        self.tag = ""
+        self.description = ""
+        self.latitude = coordinate.latitude
+        self.longitude = coordinate.longitude
+        self.metadata = [:]
     }
 }

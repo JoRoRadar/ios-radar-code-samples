@@ -58,7 +58,8 @@ struct RadarCodeSamplesApp: App {
                 AppManager.shared.appActive = true
             case .background:
                 AppManager.shared.appActive = false
-                if Radar.isTracking() && !radarModel.isOnTrip{
+                
+                if Radar.isTracking() && radarModel.tripTrackingStatus.isOnTrip{
                     Radar.stopTracking()
                 }
             case .inactive:

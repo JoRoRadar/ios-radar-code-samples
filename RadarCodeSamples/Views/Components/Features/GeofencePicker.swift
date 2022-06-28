@@ -20,18 +20,17 @@ struct GeofencePicker: View {
     let maxRetryAttempts: Int = 3
     
     var body: some View{
+        
+        /// Provide both feedback on the network request and the Picker Element for UX
+        ///
+        /// SwiftUI has interesting behavior with Pickers/Lists that require identifiable elements. When a picker is created the
+        /// selector needs to have a element selected at all times. The Picker Element doesn't default to any items currently
+        /// and must be enforced.
         if( showPicker && selectedGeofence != nil){
             HStack{
                 Text(Constants.Design.QSR.Text.qPickupLocationTitle)
                 Divider()
-                Picker(Constants.Design.QSR.Text.qPickerTitle, selection:Binding($selectedGeofence)!){
-                    ForEach(radarModel.nearbyGeofences, id: \.self){ geofence in
-                        // The Dummy flag indicates that a pin needs to be added to the map but it is not a valid Radar geofence to present the user as a store option. This flag is not present on the base RadarGeofence class.
-                        if !geofence.isDummy {
-                            Text(geofence.description).tag(geofence)
-                        }
-                    }
-                }
+                locationPickupPicker
             }
             .frame(width: Constants.screenWidth, height: frameHeight)
         }else{
@@ -40,6 +39,21 @@ struct GeofencePicker: View {
                 .onAppear(){
                     self.updatePickerValues()
                 }
+        }
+    }
+    
+    ///
+    /// View Sections
+    ///
+    
+    var locationPickupPicker: some View {
+        Picker(Constants.Design.QSR.Text.qPickerTitle, selection:Binding($selectedGeofence)!){
+            ForEach(radarModel.geofenceSearchStatus.nearbyGeofences, id: \.self){ geofence in
+                // The Dummy flag indicates that a pin needs to be added to the map but it is not a valid Radar geofence to present the user as a store option. This flag is not present on the base RadarGeofence class.
+                if !geofence.isDummy {
+                    Text(geofence.description).tag(geofence)
+                }
+            }
         }
     }
     
@@ -54,11 +68,11 @@ struct GeofencePicker: View {
         self.radarModel.findNearbyLocations()
         
         DispatchQueue.main.asyncAfter(deadline: .now() + asyncWaitPeriod) {
-            if self.radarModel.nearbyGeofences.count == 0{
+            if self.radarModel.geofenceSearchStatus.nearbyGeofences.count == 0{
                 defaultLocationText = Constants.Design.QSR.Text.qPickupLocationFallbackText
                 self.updatePickerValues(retryAttempts: retryAttempts + 1)
             }else{
-                selectedGeofence = radarModel.nearbyGeofences[0]
+                selectedGeofence = radarModel.geofenceSearchStatus.nearbyGeofences[0]
                 showPicker = true
             }
         }

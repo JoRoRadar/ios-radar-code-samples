@@ -41,7 +41,7 @@ struct NearbyStoreView: View {
                 /// Display nearby locations based on either the users location or an address searched for in the 'Autocomplete' feature.
                 
                 // TODO: Special handling when location permissions are disabled.
-                MapDisplayView(mapableGeofences: $radarModel.nearbyGeofences, coordinateRegion: $radarModel.currentRegion)
+                MapDisplayView(mapableGeofences: $radarModel.geofenceSearchStatus.nearbyGeofences, coordinateRegion: $radarModel.currentRegion)
                     .frame(width: Constants.screenWidth, height: Constants.screenHeight * mapFrameHeightMultiplier, alignment: .top)
                 if (self.searchAddress != nil){
                     Text(self.searchAddress!.addressLabel ?? Constants.Design.NearbyLocator.Text.locationAddressDataUnavailable )
@@ -54,8 +54,8 @@ struct NearbyStoreView: View {
                 Divider()
                 ScrollView{
                     VStack{
-                        if radarModel.nearbyGeofences.count > 0 {
-                            ForEach(radarModel.nearbyGeofences, id: \.self){ geofence in
+                        if radarModel.geofenceSearchStatus.nearbyGeofences.count > 0 {
+                            ForEach(radarModel.geofenceSearchStatus.nearbyGeofences, id: \.self){ geofence in
                                 // The Dummy flag indicates that a pin needs to be added to the map but it is not a valid Radar geofence to present the user as a store option. This flag is not present on the base RadarGeofence class.
                                 if !geofence.isDummy {
                                     LocationCell(radarModel: self.radarModel, geofence: geofence)

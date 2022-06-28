@@ -28,6 +28,7 @@ struct TrackingView: View {
             Divider()
                 .navigationBarTitle(Constants.Design.Tracking.Text.tNavigationTitle, displayMode: .inline)
                 .onAppear{
+                    radarModel.updateRegion()
                     if !allowManualTrip{
                         radarModel.startTripForSelectedLocation(selectedGeofence: displayGeofences[0])
                     }
@@ -41,25 +42,23 @@ struct TrackingView: View {
             Divider()
             TrackingTitleGroup
             
-            Group{
-                JourneyStatusView(selectedGeofence: $displayGeofences[0], expectedJourneyRemaining: $radarModel.expectedJourneyRemaining)
-                Spacer()
-                
-                /// Present the user with the proper CTA buttons
-                ///
-                /// Scenario A (Automatic Trip Tracking): The application will start a Radar trip as a part of the checkout process automatically.
-                ///
-                /// Scenario B (Manual Trip Tracking): The application will prompt the user to indicate they are heading to the location to pickup their goods.
-                ///
-                /// All Scenarios: Once a user has received their items after arriving, an optional final touch point can prompt the user to indicate they have received
-                /// their goods. Conversly, Radar provides the option to have a seperate party mark the trip as completed such as a store associate.
-                ///
-                /// TODO: Implement Manual Trip Tracking
-                if radarModel.tripStatus == .arrived {
-                    CompleteTripViewButton(radarModel: radarModel)
-                }else if allowManualTrip || radarModel.permissionsModel.permissionStatus != .authorizedAlways {
-                    StartTripViewButton(selectedGeofence: $displayGeofences[0], allowManualTrip: $allowManualTrip, radarModel: radarModel)
-                }
+            JourneyStatusView(selectedGeofence: $displayGeofences[0], expectedJourneyRemaining: $radarModel.tripTrackingStatus.expectedJourneyRemaining)
+            Spacer()
+            
+            /// Present the user with the proper CTA buttons
+            ///
+            /// Scenario A (Automatic Trip Tracking): The application will start a Radar trip as a part of the checkout process automatically.
+            ///
+            /// Scenario B (Manual Trip Tracking): The application will prompt the user to indicate they are heading to the location to pickup their goods.
+            ///
+            /// All Scenarios: Once a user has received their items after arriving, an optional final touch point can prompt the user to indicate they have received
+            /// their goods. Conversly, Radar provides the option to have a seperate party mark the trip as completed such as a store associate.
+            ///
+            /// TODO: Implement Manual Trip Tracking
+            if radarModel.tripTrackingStatus.tripStatus == .arrived {
+                CompleteTripViewButton(radarModel: radarModel)
+            }else if allowManualTrip || radarModel.permissionsModel.permissionStatus != .authorizedAlways {
+                StartTripViewButton(selectedGeofence: $displayGeofences[0], allowManualTrip: $allowManualTrip, radarModel: radarModel)
             }
         }
     }
@@ -99,7 +98,7 @@ struct TrackingView: View {
     var TrackingTitleGroup: some View{
         Group{
             Text(Constants.Design.Tracking.Text.jTitleText)
-            TripJourneyView(journeyState: $radarModel.tripStatus)
+            TripJourneyView(journeyState: $radarModel.tripTrackingStatus.tripStatus)
                 .padding()
             Divider()
         }

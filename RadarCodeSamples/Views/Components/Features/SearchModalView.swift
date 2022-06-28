@@ -36,7 +36,7 @@ struct SearchModalView: View {
                 .background(Color.primaryColor)
                 .frame(width:Constants.screenWidth)
                 .padding(searchFieldInsets)
-            SearchResultsView(searchModalVisible: $searchModalVisible, confirmedAddress: $confirmedAddress, autoCompleteSuggestions: radarModel.autocompleteSuggestions)
+            SearchResultsView(searchModalVisible: $searchModalVisible, confirmedAddress: $confirmedAddress, autoCompleteSuggestions: radarModel.autocompleteStatus.autocompleteSuggestions)
             Spacer()
         }
     }

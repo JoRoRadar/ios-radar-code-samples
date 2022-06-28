@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>RadarAPIKey</key>
-	<string>prj_test_pk_fd04a06a7e14301ce5308d536f212442b5fb4d07</string>
+	<string>&lt;RADAR API KEY&gt;</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
